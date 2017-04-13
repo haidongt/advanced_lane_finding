@@ -31,6 +31,8 @@ class Lane():
 
         self.curvature = None
 
+        self.is_valid = True
+
     def calculate(self):
         self.line_base_pos = self.line_fit[0]*self.max_y**2 + self.line_fit[1]*self.max_y + self.line_fit[2]
         self.calculate_curvature()
@@ -38,15 +40,14 @@ class Lane():
     def calculate_curvature(self):
         x = self.allx
         y = self.ally
-        y_eval = np.max(y)
+        y_eval = np.max(y) / 2
         ym_per_pix = 30/720 # meters per pixel in y dimension
-        xm_per_pix = 3.7/720 # 3.7/700 # meters per pixel in x dimension
+        xm_per_pix = 3.7/445 # 3.7/445 # meters per pixel in x dimension
 
         # Fit new polynomials to x,y in world space
         fit_cr = np.polyfit(y*ym_per_pix, x*xm_per_pix, 2)
         # Calculate the new radii of curvature
         self.curvature = ((1 + (2*fit_cr[0]*y_eval*ym_per_pix + fit_cr[1])**2)**1.5) / np.absolute(2*fit_cr[0])
-
 
 
 class LaneDetector:
@@ -66,6 +67,8 @@ class LaneDetector:
 
         self.Minv = cv2.getPerspectiveTransform(perspective_dst, perspective_src)
         self.past_detected_lanes = []
+
+        self.polygon_points_old = None
 
     def undistort(self, img):
         img = imresize(img, self.image_size)
@@ -239,6 +242,8 @@ class LaneDetector:
         pts_right = np.array([np.flipud(np.transpose(np.vstack([self.right_fitx, self.ploty])))])
         pts = np.hstack((pts_left, pts_right))
 
+        pts = self.get_new_polygon(pts)
+
         # Draw the lane onto the warped blank image
         cv2.fillPoly(color_warp, np.int_([pts]), (0,255, 0))
 
@@ -247,6 +252,19 @@ class LaneDetector:
         # Combine the result with the original image
         result = cv2.addWeighted(undist, 1, newwarp, 0.3, 0)
         return result
+
+    def get_new_polygon(self, new_polygon):
+        if (self.polygon_points_old == None):
+            self.polygon_points_old = new_polygon
+
+        a = self.polygon_points_old
+        b = new_polygon
+        ret = cv2.matchShapes(a[0],b[0],1,0.0)
+        print(ret)
+
+        if (ret < 0.045):
+            self.polygon_points_old = new_polygon
+        return self.polygon_points_old
 
     def fusion_debug_info(self, original, debug_img):
         # draw perspective view at upper right

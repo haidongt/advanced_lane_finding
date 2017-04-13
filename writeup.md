@@ -34,7 +34,7 @@ I first estimate how long a pixel represent in real world in both x axis and y a
 ![alt text][image5]
 
 ### Provide a link to your final video output.
-[Link](https://www.youtube.com/watch?v=1QlorLyxOmk)
+[Link](https://youtu.be/YcR2yBNeWRg)
 
 
 ### Briefly discuss any problems / issues you faced in your implementation of this project. Where will your pipeline likely fail? What could you do to make it more robust?
